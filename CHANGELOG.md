@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.5.0-1a5c1c8f9a9901da8a95e1d896a9e777aff0b0eb
+* chore: bump nearcore to 2.5.0-1a5c1c8f9a9901da8a95e1d896a9e777aff0b0eb
+
 ## 2.5.0-rc.2
 * chore: bump nearcore to 2.5.0-rc.2
 
