@@ -1,5 +1,11 @@
 # Changelog
 
+# 2.5.1
+* chore: bump nearcore to 2.5.1
+* chore: bump Rust toolchain to 1.85.0
+* Use Rust edition 2024
+* fix: Pin the `tempfile` crate to version 3.14 due to [issue 12944](https://github.com/near/nearcore/issues/12944#issuecomment-2707438357)
+
 ## 2.5.0-rc.3
 * chore: bump nearcore to 2.5.0-rc.3
 
