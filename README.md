@@ -221,15 +221,14 @@ The data structure we use is the following:
 ```
 <block_height>/
   block.json
-  shard_0.json
-  shard_1.json
+  shard_<N>.json
   ...
-  shard_N.json
+  shard_<N>.json
 ```
 
 - `<block_height>` is a 12-character-long `u64` string with leading zeros (e.g `000042839521`). [See this issue for a reasoning](https://github.com/near/near-lake/issues/23)
 - `block_json` contains JSON-serialized [`BlockView`](https://github.com/near/nearcore/blob/e9a28c46c2bea505b817abf484e6015a61ea7d01/core/primitives/src/views.rs#L711-L716) struct. **NB!** this struct might change in the future, we will announce it
-- `shard_N.json` where `N` is `u64` starting from `0`. Represents the index number of the shard. In order to find out the expected number of shards in the block you can look in `block.json` at `.header.chunks_included`
+- `shard_<N>.json` where `N` is `u64`. Represents the id of the shard. In order to find out the expected shard ids in the block you can look in `block.json` at `.chunks.shard_id`
 
 ### Access the data
 
