@@ -11,6 +11,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
 
 jobs:
   check-format-and-lint:
@@ -19,8 +20,7 @@ jobs:
     container:
       image: ubuntu:22.04
     steps:
-      - uses: actions/checkout@v2
-
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           chmod +x .ci/install-deps.sh && .ci/install-deps.sh
@@ -41,7 +41,7 @@ jobs:
     container:
       image: ubuntu:22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -53,3 +53,21 @@ jobs:
 
       - name: Cargo Check
         run: cargo check --all
+
+  cargo-test:
+    name: Cargo Test
+    runs-on: selfhosted-heavy
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y build-essential pkg-config libclang-dev libssl-dev
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache: false
+          toolchain: stable
+          override: false
+      - name: Cargo Tests
+        env:
+          RUST_LOG: info
+        run: cargo t --release
