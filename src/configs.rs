@@ -48,7 +48,9 @@ pub(crate) struct RunArgs {
     /// Tells whether to validate the genesis file before starting
     #[clap(long)]
     pub validate_genesis: bool,
-    /// Sets the concurrency for indexing. Note: concurrency (set to 2+) may lead to warnings due to tight constraints between transactions and receipts (those will get resolved eventually, but unless it is the second pass of indexing, concurrency won't help at the moment).
+    /// Sets the concurrency for indexing. Note: concurrency (set to 2+) may lead to warnings
+    /// due to tight constraints between transactions and receipts (those will get resolved
+    /// eventually, but unless it is the second pass of indexing, concurrency won't help at the moment).
     #[clap(long, default_value = "1")]
     pub concurrency: std::num::NonZeroU16,
     /// Sets the starting point for indexing

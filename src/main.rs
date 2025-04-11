@@ -10,6 +10,8 @@ use tracing_subscriber::EnvFilter;
 
 mod configs;
 mod metrics;
+#[cfg(test)]
+mod tests;
 mod utils;
 
 const INDEXER: &str = "near_lake";
@@ -191,7 +193,7 @@ async fn listen_blocks(
         .load()
         .await;
     let mut s3_conf = aws_sdk_s3::config::Builder::from(&shared_config);
-    // Owerride S3 endpoint in case you want to use custom solution
+    // Override S3 endpoint in case you want to use custom solution
     // like Minio or Localstack as a S3 compatible storage
     if let Some(s3_endpoint) = endpoint {
         s3_conf = s3_conf.endpoint_url(s3_endpoint.to_string());
@@ -224,27 +226,40 @@ async fn handle_message(
     let mut stats_lock = stats.lock().await;
     stats_lock.block_heights_processing.insert(block_height);
     drop(stats_lock);
+    let height = streamer_message.block.header.height;
+    let base_key = format!("{:0>12}", height);
 
-    let base_key = format!("{:0>12}", streamer_message.block.header.height);
-
+    #[cfg(test)]
+    let start = std::time::Instant::now();
     // Block
     let block_json = serde_json::to_value(streamer_message.block)
         .expect("Failed to serializer BlockView to JSON");
-    put_object_or_retry(
+    let block_task = tokio::spawn(put_object_or_retry(
         client.clone(),
         bucket.clone(),
         block_json,
         format!("{}/block.json", base_key).to_string(),
-    )
-    .await;
+    ));
 
     // Shards
-    for shard in streamer_message.shards.iter() {
-        let key = format!("{}/shard_{}.json", base_key, shard.shard_id);
-        let shard_json =
-            serde_json::to_value(shard).expect("Failed to serialize IndexerShard to JSON");
-        put_object_or_retry(client.clone(), bucket.clone(), shard_json, key).await;
-    }
+    let shards_num = streamer_message.shards.len();
+    let shard_task = tokio_stream::iter(streamer_message.shards)
+        .map(async |shard| {
+            let key = format!("{}/shard_{}.json", base_key, shard.shard_id);
+            let shard_json =
+                serde_json::to_value(shard).expect("Failed to serialize IndexerShard to JSON");
+            put_object_or_retry(client.clone(), bucket.clone(), shard_json, key).await;
+        })
+        .buffer_unordered(shards_num)
+        .collect::<Vec<_>>();
+
+    let _ = tokio::join!(block_task, shard_task);
+    #[cfg(test)]
+    tracing::info!(
+        "sending block {height} took: {:.5} seconds",
+        start.elapsed().as_secs_f64()
+    );
+
     let mut stats_lock = stats.lock().await;
     stats_lock.block_heights_processing.remove(&block_height);
     stats_lock.blocks_processed_count += 1;
@@ -262,9 +277,8 @@ async fn put_object_or_retry(
     filename: String,
 ) {
     loop {
-        let body = aws_sdk_s3::primitives::ByteStream::from(
-            content.clone().to_string().as_bytes().to_vec(),
-        );
+        let body =
+            aws_sdk_s3::primitives::ByteStream::from(content.clone().to_string().into_bytes());
         match put_object(&client, &bucket, body, filename.as_str()).await {
             Ok(_) => break,
             Err(err) => {
