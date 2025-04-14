@@ -3,12 +3,15 @@ use aws_config::meta::region::RegionProviderChain;
 use aws_sdk_s3::config::Credentials;
 use futures::StreamExt;
 use near_indexer_primitives::StreamerMessage;
+use std::ffi::OsStr;
 use std::sync::Arc;
+use tar::Archive;
 use testcontainers_modules::minio::MinIO;
 use testcontainers_modules::testcontainers::core::{ContainerPort, Mount};
 use testcontainers_modules::testcontainers::runners::AsyncRunner;
 use testcontainers_modules::testcontainers::{ContainerAsync, ImageExt};
 use tokio::sync::{Mutex, mpsc};
+use zstd::Decoder;
 
 const BLOCKS_NUMBER: usize = 100;
 const MINIO_ROOT_USER: &str = "minioadmin";
@@ -55,11 +58,16 @@ async fn test_sending_blocks_in_parallel() {
 }
 
 async fn blocks_reader(sender: mpsc::Sender<StreamerMessage>) -> anyhow::Result<()> {
-    let mut dir = tokio::fs::read_dir("blocks").await?;
+    decompress_blocks()?;
 
+    let mut dir = tokio::fs::read_dir("blocks").await?;
     let mut files = tokio::task::JoinSet::new();
 
     while let Some(entry) = dir.next_entry().await? {
+        if !is_block(&entry) {
+            continue;
+        }
+
         let s = sender.clone();
 
         files.spawn(async move {
@@ -103,6 +111,24 @@ async fn create_client() -> aws_sdk_s3::Client {
         .unwrap();
 
     client
+}
+
+fn decompress_blocks() -> anyhow::Result<()> {
+    let file = std::fs::File::open("blocks.tar.zst")?;
+    let reader = std::io::BufReader::new(file);
+    let zst_decoder = Decoder::new(reader)?;
+    let mut archive = Archive::new(zst_decoder);
+
+    archive.unpack(".")?;
+    Ok(())
+}
+
+fn is_block(entry: &tokio::fs::DirEntry) -> bool {
+    entry
+        .path()
+        .file_name()
+        .and_then(OsStr::to_str)
+        .map_or(false, |f| !f.starts_with('.'))
 }
 
 struct S3Container {

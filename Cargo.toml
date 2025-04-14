@@ -38,4 +38,6 @@ near-indexer-primitives = { git = "https://github.com/near/nearcore", tag = "2.6
 near-o11y = { git = "https://github.com/near/nearcore", tag = "2.6.0-rc.1" }
 
 [dev-dependencies]
+tar = "0.4"
 testcontainers-modules = { version = "0.11", features = ["minio"] }
+zstd = "0.13"
