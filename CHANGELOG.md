@@ -1,5 +1,8 @@
 # Changelog
 
+# 2.6.3
+* chore: bump nearcore to 2.6.3
+
 # 2.6.3-rc.2
 * chore: bump nearcore to 2.6.3-rc.2
 
