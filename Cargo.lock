@@ -4158,7 +4158,7 @@ dependencies = [
 
 [[package]]
 name = "near-lake"
-version = "2.6.3"
+version = "1.0.0-2.6.3"
 dependencies = [
  "actix",
  "anyhow",
