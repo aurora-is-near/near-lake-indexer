@@ -223,11 +223,11 @@ async fn handle_message(
     stats: Arc<Mutex<Stats>>,
 ) -> anyhow::Result<()> {
     let block_height = streamer_message.block.header.height;
-    let mut stats_lock = stats.lock().await;
-    stats_lock.block_heights_processing.insert(block_height);
-    drop(stats_lock);
-    let height = streamer_message.block.header.height;
-    let base_key = format!("{:0>12}", height);
+    let base_key = format!("{block_height:0>12}");
+    {
+        let mut stats_lock = stats.lock().await;
+        stats_lock.block_heights_processing.insert(block_height);
+    }
 
     #[cfg(test)]
     let start = std::time::Instant::now();
@@ -238,14 +238,14 @@ async fn handle_message(
         client.clone(),
         bucket.clone(),
         block_json,
-        format!("{}/block.json", base_key).to_string(),
+        format!("{base_key}/block.json"),
     ));
 
     // Shards
     let shards_num = streamer_message.shards.len();
     let shard_task = tokio_stream::iter(streamer_message.shards)
         .map(async |shard| {
-            let key = format!("{}/shard_{}.json", base_key, shard.shard_id);
+            let key = format!("{base_key}/shard_{}.json", shard.shard_id);
             let shard_json =
                 serde_json::to_value(shard).expect("Failed to serialize IndexerShard to JSON");
             put_object_or_retry(client.clone(), bucket.clone(), shard_json, key).await;
@@ -256,7 +256,7 @@ async fn handle_message(
     let _ = tokio::join!(block_task, shard_task);
     #[cfg(test)]
     tracing::info!(
-        "sending block {height} took: {:.5} seconds",
+        "sending block {block_height} took: {:.5} seconds",
         start.elapsed().as_secs_f64()
     );
 
@@ -335,7 +335,7 @@ fn init_tracing() {
             for directive in rust_log.split(',').filter_map(|s| match s.parse() {
                 Ok(directive) => Some(directive),
                 Err(err) => {
-                    eprintln!("Ignoring directive `{}`: {}", s, err);
+                    eprintln!("Ignoring directive `{s}`: {err}");
                     None
                 }
             }) {
