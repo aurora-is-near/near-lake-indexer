@@ -1,5 +1,8 @@
 # Changelog
 
+# 1.0.0-2.7.0-rc.1
+* chore: bump nearcore to 2.7.0-rc.1
+
 # 1.0.0-2.6.3
 * chore: set version to the new format: 1.0.0-2.6.3
 
