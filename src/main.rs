@@ -24,7 +24,7 @@ struct Stats {
 }
 
 impl Stats {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             block_heights_processing: std::collections::BTreeSet::new(),
             blocks_processed_count: 0,
@@ -162,14 +162,12 @@ async fn lake_logger(
             stats_copy.block_heights_processing.len(),
             stats_copy.blocks_processed_count,
             block_processing_speed,
-            if let Some(duration) = time_to_catch_the_tip_duration {
+            time_to_catch_the_tip_duration.map_or_else(|| "".to_string(), |duration| {
                 format!(
                     " | {} to catch up the tip",
                     humantime::format_duration(duration)
                 )
-            } else {
-                "".to_string()
-            }
+            })
         );
         prev_blocks_processed_count = stats_copy.blocks_processed_count;
     }
