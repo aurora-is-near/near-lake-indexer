@@ -12,7 +12,7 @@ use clap::{Parser, ValueEnum};
     propagate_version(true),
     next_line_help(true)
 )]
-pub(crate) struct Opts {
+pub struct Opts {
     /// Sets a custom config dir. Defaults to ~/.near/
     #[clap(short, long)]
     pub home: Option<std::path::PathBuf>,
@@ -21,7 +21,7 @@ pub(crate) struct Opts {
 }
 
 #[derive(Parser, Clone, Debug)]
-pub(crate) enum SubCommand {
+pub enum SubCommand {
     /// Run NEAR Indexer Example. Start observe the network
     Run(RunArgs),
     /// Initialize necessary configs
@@ -29,7 +29,7 @@ pub(crate) enum SubCommand {
 }
 
 #[derive(Parser, Debug, Clone)]
-pub(crate) struct RunArgs {
+pub struct RunArgs {
     /// AWS S3 compatible API Endpoint
     #[clap(long, env)]
     pub endpoint: Option<http::Uri>,
@@ -82,7 +82,7 @@ impl RunArgs {
 
 #[allow(clippy::enum_variant_names)] // we want commands to be more explicit
 #[derive(Parser, Debug, Clone)]
-pub(crate) enum SyncModeSubCommand {
+pub enum SyncModeSubCommand {
     /// continue from the block Indexer was interrupted
     SyncFromInterruption,
     /// start from the newest block after node finishes syncing
@@ -103,15 +103,15 @@ pub enum FinalityArg {
 impl From<FinalityArg> for near_indexer::near_primitives::types::Finality {
     fn from(value: FinalityArg) -> Self {
         match value {
-            FinalityArg::Optimistic => near_indexer::near_primitives::types::Finality::None,
-            FinalityArg::NearFinal => near_indexer::near_primitives::types::Finality::DoomSlug,
-            FinalityArg::Final => near_indexer::near_primitives::types::Finality::Final,
+            FinalityArg::Optimistic => Self::None,
+            FinalityArg::NearFinal => Self::DoomSlug,
+            FinalityArg::Final => Self::Final,
         }
     }
 }
 
 #[derive(Parser, Debug, Clone)]
-pub(crate) struct BlockArgs {
+pub struct BlockArgs {
     /// block height for block sync mode
     #[clap(long)]
     pub height: u64,
@@ -128,7 +128,7 @@ impl From<SyncModeSubCommand> for near_indexer::SyncModeEnum {
 }
 
 #[derive(Parser, Clone, Debug)]
-pub(crate) struct InitConfigArgs {
+pub struct InitConfigArgs {
     /// chain/network id (localnet, testnet, devnet, betanet)
     #[clap(short, long)]
     pub chain_id: Option<String>,

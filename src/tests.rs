@@ -128,7 +128,7 @@ fn is_block(entry: &tokio::fs::DirEntry) -> bool {
         .path()
         .file_name()
         .and_then(OsStr::to_str)
-        .map_or(false, |f| !f.starts_with('.'))
+        .is_some_and(|f| !f.starts_with('.'))
 }
 
 struct S3Container {
