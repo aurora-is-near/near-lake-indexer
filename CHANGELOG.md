@@ -1,5 +1,8 @@
 # Changelog
 
+# 1.0.0-2.6.5
+* chore: bump nearcore to 2.6.5 for mainnet
+
 # 1.0.0-2.6.4
 * chore: bump nearcore to 2.6.4 for mainnet
 
