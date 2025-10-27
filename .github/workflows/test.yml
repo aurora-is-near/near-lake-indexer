@@ -16,7 +16,7 @@ env:
 jobs:
   check-format-and-lint:
     name: Check & Lint
-    runs-on: selfhosted-heavy
+    runs-on: runs-on=${{ github.run_id }}/family=c5a.2xlarge+c6a.2xlarge/image=ubuntu24-full-x64
     container:
       image: ubuntu:22.04
     steps:
@@ -37,7 +37,7 @@ jobs:
 
   cargo-check:
     name: Cargo Check
-    runs-on: selfhosted-heavy
+    runs-on: runs-on=${{ github.run_id }}/family=c5a.2xlarge+c6a.2xlarge/image=ubuntu24-full-x64
     container:
       image: ubuntu:22.04
     steps:
@@ -56,7 +56,7 @@ jobs:
 
   cargo-test:
     name: Cargo Test
-    runs-on: selfhosted-heavy
+    runs-on: runs-on=${{ github.run_id }}/family=c5a.2xlarge+c6a.2xlarge/image=ubuntu24-full-x64
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies

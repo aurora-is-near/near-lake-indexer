@@ -118,7 +118,7 @@ jobs:
   update-cargo:
     needs: check-update-needed
     if: needs.check-update-needed.outputs.update_needed == 'true' && needs.check-update-needed.outputs.pr_exists == 'false'
-    runs-on: selfhosted
+    runs-on: runs-on=${{ github.run_id }}/family=c5a.2xlarge+c6a.2xlarge/image=ubuntu24-full-x64
     outputs:
       new_version: ${{ steps.update_cargo.outputs.new_version }}
     steps:
