@@ -1,5 +1,8 @@
 # Changelog
 
+# 1.0.0-2.8.1-rc.1
+* chore: bump nearcore to 2.8.1-rc.1
+
 # 1.0.0-2.9.0
 * chore: bump nearcore to 2.9.0
 
