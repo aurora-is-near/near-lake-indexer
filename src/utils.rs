@@ -7,8 +7,10 @@ use near_indexer_primitives::types;
 pub(crate) async fn fetch_latest_block(
     client: &near_async::multithread::MultithreadRuntimeHandle<ViewClientActorInner>,
 ) -> anyhow::Result<u64> {
-    let block = client.send_async(
-        near_client::GetBlock(types::BlockReference::Finality(types::Finality::Final))
-    ).await??;
+    let block = client
+        .send_async(near_client::GetBlock(types::BlockReference::Finality(
+            types::Finality::Final,
+        )))
+        .await??;
     Ok(block.header.height)
 }

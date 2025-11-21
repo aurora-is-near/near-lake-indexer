@@ -70,9 +70,15 @@ fn main() {
             let system = actix::System::new();
             system.block_on(async move {
                 let indexer_config = args.clone().to_indexer_config(home_dir);
-                let near_config = indexer_config.load_near_config().expect("failed to load near config");
-                let near_node = near_indexer::Indexer::start_near_node(&indexer_config, near_config.clone()).await.expect("failed to start near node");
-                let indexer = near_indexer::Indexer::from_near_node(indexer_config, near_config, &near_node);
+                let near_config = indexer_config
+                    .load_near_config()
+                    .expect("failed to load near config");
+                let near_node =
+                    near_indexer::Indexer::start_near_node(&indexer_config, near_config.clone())
+                        .await
+                        .expect("failed to start near node");
+                let indexer =
+                    near_indexer::Indexer::from_near_node(indexer_config, near_config, &near_node);
 
                 // Regular indexer process starts here
                 let stream = indexer.streamer();
