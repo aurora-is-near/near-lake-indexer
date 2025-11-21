@@ -1,10 +1,13 @@
 use std::error::Error;
 use std::sync::Arc;
 
+use anyhow::Context;
 use aws_config::meta::region::RegionProviderChain;
 use clap::Parser;
 use configs::{Opts, SubCommand};
 use futures::StreamExt;
+use near_client::ViewClientActorInner;
+use near_indexer_primitives::types::Gas;
 use tokio::sync::Mutex;
 use tracing_subscriber::EnvFilter;
 
@@ -33,7 +36,7 @@ impl Stats {
     }
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
     // We use it to automatically search the for root certificates to perform HTTPS calls
     // (sending telemetry and downloading genesis)
@@ -66,33 +69,47 @@ fn main() {
                 .inc();
 
             let system = actix::System::new();
-            system.block_on(async move {
-                let indexer_config = args.clone().to_indexer_config(home_dir);
-                let indexer = near_indexer::Indexer::new(indexer_config)
-                    .expect("Failed to initialize the Indexer");
+            system
+                .block_on(async move {
+                    let indexer_config = args.clone().to_indexer_config(home_dir);
+                    let near_config = indexer_config
+                        .load_near_config()
+                        .context("failed to load near config")?;
+                    let near_node = near_indexer::Indexer::start_near_node(
+                        &indexer_config,
+                        near_config.clone(),
+                    )
+                    .await
+                    .context("failed to start near node")?;
+                    let indexer = near_indexer::Indexer::from_near_node(
+                        indexer_config,
+                        near_config,
+                        &near_node,
+                    );
 
-                // Regular indexer process starts here
-                let stream = indexer.streamer();
-                let view_client = indexer.client_actors().0;
+                    // Regular indexer process starts here
+                    let stream = indexer.streamer();
+                    let view_client = near_node.view_client;
 
-                let stats: Arc<Mutex<Stats>> = Arc::new(Mutex::new(Stats::new()));
+                    let stats: Arc<Mutex<Stats>> = Arc::new(Mutex::new(Stats::new()));
 
-                actix::spawn(lake_logger(Arc::clone(&stats), view_client));
+                    actix::spawn(lake_logger(Arc::clone(&stats), view_client));
 
-                listen_blocks(
-                    stream,
-                    args.endpoint,
-                    args.bucket,
-                    args.region,
-                    args.fallback_region,
-                    args.concurrency,
-                    Arc::clone(&stats),
-                )
-                .await;
-
-                actix::System::current().stop();
-            });
-            system.run().unwrap();
+                    listen_blocks(
+                        stream,
+                        args.endpoint,
+                        args.bucket,
+                        args.region,
+                        args.fallback_region,
+                        args.concurrency,
+                        Arc::clone(&stats),
+                    )
+                    .await;
+                    actix::System::current().stop();
+                    Ok::<(), anyhow::Error>(())
+                })
+                .context("failed to run the indexer")?;
+            system.run().context("failed to run the system")?;
         }
         SubCommand::Init(config) => near_indexer::init_configs(
             &home_dir,
@@ -118,33 +135,45 @@ fn main() {
             },
             config.download_config_url.as_ref().map(AsRef::as_ref),
             config.boot_nodes.as_ref().map(AsRef::as_ref),
-            config.max_gas_burnt_view,
+            config.max_gas_burnt_view.map(Gas::from_gas),
+            config.state_sync_bucket.as_ref().map(AsRef::as_ref),
         )
-        .expect("Failed to initialize the node config files"),
+        .context("Failed to initialize the node config files")?,
     }
+    Ok(())
 }
 
 async fn lake_logger(
     stats: Arc<Mutex<Stats>>,
-    view_client: actix::Addr<near_client::ViewClientActor>,
+    view_client: near_async::multithread::MultithreadRuntimeHandle<ViewClientActorInner>,
 ) {
     let interval_secs = 10;
     let mut prev_blocks_processed_count: u64 = 0;
 
     loop {
         tokio::time::sleep(std::time::Duration::from_secs(interval_secs)).await;
-        let stats_lock = stats.lock().await;
-        let stats_copy = stats_lock.clone();
-        drop(stats_lock);
+        // Extract only needed values while holding the lock, then release immediately
+        let (
+            stats_blocks_processed_count,
+            stats_last_processed_block_height,
+            stats_processing_count,
+        ) = {
+            let stats_lock = stats.lock().await;
+            (
+                stats_lock.blocks_processed_count,
+                stats_lock.last_processed_block_height,
+                stats_lock.block_heights_processing.len(),
+            )
+        };
 
-        let block_processing_speed: f64 = ((stats_copy.blocks_processed_count
+        let block_processing_speed: f64 = ((stats_blocks_processed_count
             - prev_blocks_processed_count) as f64)
             / (interval_secs as f64);
 
         let time_to_catch_the_tip_duration = if block_processing_speed > 0.0 {
             if let Ok(block_height) = utils::fetch_latest_block(&view_client).await {
                 Some(std::time::Duration::from_millis(
-                    (((block_height - stats_copy.last_processed_block_height) as f64
+                    (((block_height - stats_last_processed_block_height) as f64
                         / block_processing_speed)
                         * 1000f64) as u64,
                 ))
@@ -158,9 +187,9 @@ async fn lake_logger(
         tracing::info!(
             target: INDEXER,
             "# {} | Blocks processing: {}| Blocks done: {}. Bps {:.2} b/s {}",
-            stats_copy.last_processed_block_height,
-            stats_copy.block_heights_processing.len(),
-            stats_copy.blocks_processed_count,
+            stats_last_processed_block_height,
+            stats_processing_count,
+            stats_blocks_processed_count,
             block_processing_speed,
             if let Some(duration) = time_to_catch_the_tip_duration {
                 format!(
@@ -171,7 +200,7 @@ async fn lake_logger(
                 "".to_string()
             }
         );
-        prev_blocks_processed_count = stats_copy.blocks_processed_count;
+        prev_blocks_processed_count = stats_blocks_processed_count;
     }
 }
 
