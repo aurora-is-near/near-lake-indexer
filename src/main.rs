@@ -5,6 +5,8 @@ use aws_config::meta::region::RegionProviderChain;
 use clap::Parser;
 use configs::{Opts, SubCommand};
 use futures::StreamExt;
+use near_client::ViewClientActorInner;
+use near_indexer_primitives::types::Gas;
 use tokio::sync::Mutex;
 use tracing_subscriber::EnvFilter;
 
@@ -68,12 +70,13 @@ fn main() {
             let system = actix::System::new();
             system.block_on(async move {
                 let indexer_config = args.clone().to_indexer_config(home_dir);
-                let indexer = near_indexer::Indexer::new(indexer_config)
-                    .expect("Failed to initialize the Indexer");
+                let near_config = indexer_config.load_near_config().expect("failed to load near config");
+                let near_node = near_indexer::Indexer::start_near_node(&indexer_config, near_config.clone()).await.expect("failed to start near node");
+                let indexer = near_indexer::Indexer::from_near_node(indexer_config, near_config, &near_node);
 
                 // Regular indexer process starts here
                 let stream = indexer.streamer();
-                let view_client = indexer.client_actors().0;
+                let view_client = near_node.view_client;
 
                 let stats: Arc<Mutex<Stats>> = Arc::new(Mutex::new(Stats::new()));
 
@@ -118,7 +121,8 @@ fn main() {
             },
             config.download_config_url.as_ref().map(AsRef::as_ref),
             config.boot_nodes.as_ref().map(AsRef::as_ref),
-            config.max_gas_burnt_view,
+            config.max_gas_burnt_view.map(|gas| Gas::from_gas(gas)),
+            None,
         )
         .expect("Failed to initialize the node config files"),
     }
@@ -126,7 +130,7 @@ fn main() {
 
 async fn lake_logger(
     stats: Arc<Mutex<Stats>>,
-    view_client: actix::Addr<near_client::ViewClientActor>,
+    view_client: near_async::multithread::MultithreadRuntimeHandle<ViewClientActorInner>,
 ) {
     let interval_secs = 10;
     let mut prev_blocks_processed_count: u64 = 0;
