@@ -128,7 +128,7 @@ fn main() {
             config.download_config_url.as_ref().map(AsRef::as_ref),
             config.boot_nodes.as_ref().map(AsRef::as_ref),
             config.max_gas_burnt_view.map(|gas| Gas::from_gas(gas)),
-            None,
+            config.state_sync_bucket.as_ref().map(AsRef::as_ref),
         )
         .expect("Failed to initialize the node config files"),
     }
