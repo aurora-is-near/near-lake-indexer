@@ -1,5 +1,92 @@
 # Changelog
 
+# 1.0.0-2.10.7
+* chore: bump nearcore to 2.10.7
+
+# 1.0.0-2.10.6
+* chore: bump nearcore to 2.10.6
+
+# 1.0.0-2.10.5
+* chore: bump nearcore to 2.10.5
+
+# 1.0.0-2.10.4
+* chore: bump nearcore to 2.10.4
+
+# 1.0.0-2.10.3
+* chore: bump nearcore to 2.10.3
+
+# 1.0.0-2.10.2
+* chore: bump nearcore to 2.10.2
+
+# 1.0.0-2.10.1
+* chore: bump nearcore to 2.10.1
+
+# 1.0.0-2.10.0
+* chore: bump nearcore to 2.10.0
+
+# 1.0.0-2.10.0-rc.5
+* chore: bump nearcore to 2.10.0-rc.5
+
+# 1.0.0-2.10.0-rc.4
+* chore: bump nearcore to 2.10.0-rc.4
+
+# 1.0.0-2.10.0-rc.3
+* chore: bump nearcore to 2.10.0-rc.3
+
+# 1.0.0-2.9.1
+* chore: bump nearcore to 2.9.1
+
+# 1.0.0-2.8.1-rc.1
+* chore: bump nearcore to 2.8.1-rc.1
+
+# 1.0.0-2.9.0
+* chore: bump nearcore to 2.9.0
+
+# 1.0.0-2.8.0
+* chore: bump nearcore to 2.8.0
+
+# 1.0.0-2.8.0-rc.2
+* chore: bump nearcore to 2.8.0-rc.2
+
+# 1.0.0-2.8.0-rc.1
+* chore: bump nearcore to 2.8.0-rc.1
+
+# 1.0.0-2.7.1
+* chore: bump nearcore to 2.7.1
+
+# 1.0.0-2.7.1-rc.1
+* chore: bump nearcore to 2.7.1-rc.1
+
+# 1.0.0-2.7.0
+* chore: bump nearcore to 2.7.0
+
+# 1.0.0-2.7.0-rc.4
+* chore: bump nearcore to 2.7.0-rc.4
+
+# 1.0.0-2.7.0-rc.3
+* chore: bump nearcore to 2.7.0-rc.3
+
+# 1.0.0-2.7.0-rc.2
+* chore: bump nearcore to 2.7.0-rc.2
+
+# 1.0.0-2.7.0-rc.1
+* chore: bump nearcore to 2.7.0-rc.1
+
+# 1.0.0-2.6.3
+* chore: set version to the new format: 1.0.0-2.6.3
+
+# 2.6.3
+* chore: bump nearcore to 2.6.3
+
+# 2.6.3-rc.2
+* chore: bump nearcore to 2.6.3-rc.2
+
+# 2.6.2
+* chore: bump nearcore to 2.6.2
+
+# 2.6.0-rc.2
+* chore: bump nearcore to 2.6.0-rc.2
+
 # 2.6.0-rc.1
 * chore: bump nearcore to 2.6.0-rc.1
 
@@ -205,7 +292,7 @@ After two years of successful work in production we realized that no major chang
 
 Some updates on the `nearcore` side affected the Indexer Framework:
 - `near_client` calls require the usage of `near_o11y::WithSpanContextExt`. Thus we depend on `near-o11y` explicitly since this version
-- `init_configs` function has been extended with a parameter `download_records_url: Option<&str>`. Thus `init` command of the Lake Indexer has been extended with the parameter `donwload_genesis_records_url`
+- `init_configs` function has been extended with a parameter `download_records_url: Option<&str>`. Thus `init` command of the Lake Indexer has been extended with the parameter `download_genesis_records_url`
 - `IndexerConfig` requires new parameter `validate_genesis: bool` so the `run` command has been extended with the key `--validate-genesis`
 
 ## 0.1.18

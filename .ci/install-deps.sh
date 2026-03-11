@@ -9,7 +9,7 @@ apt-get update && apt-get install -y \
 
 CODENAME=$(grep ^VERSION_CODENAME= /etc/os-release | cut -d= -f2 | tr -d '"')
 CLANG_VERSION="17"
-PROTOC_VERSION="24.4"
+PROTOC_VERSION="33.1"
 
 # install protoc
 if [ ! -f /usr/local/bin/protoc ]

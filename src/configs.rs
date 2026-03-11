@@ -169,4 +169,7 @@ pub(crate) struct InitConfigArgs {
     /// to bootstrap the network and store them in config.json
     #[clap(long)]
     pub boot_nodes: Option<String>,
+    /// Specify the cloud bucket to use for state sync.
+    #[clap(long)]
+    pub state_sync_bucket: Option<String>,
 }
