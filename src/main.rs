@@ -6,7 +6,7 @@ use aws_config::meta::region::RegionProviderChain;
 use clap::Parser;
 use configs::{Opts, SubCommand};
 use futures::StreamExt;
-use near_client::ViewClientActorInner;
+use near_client::ViewClientActor;
 use near_indexer_primitives::types::Gas;
 use tokio::sync::Mutex;
 use tracing_subscriber::EnvFilter;
@@ -145,7 +145,7 @@ fn main() -> anyhow::Result<()> {
 
 async fn lake_logger(
     stats: Arc<Mutex<Stats>>,
-    view_client: near_async::multithread::MultithreadRuntimeHandle<ViewClientActorInner>,
+    view_client: near_async::multithread::MultithreadRuntimeHandle<ViewClientActor>,
 ) {
     let interval_secs = 10;
     let mut prev_blocks_processed_count: u64 = 0;
