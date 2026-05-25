@@ -314,15 +314,12 @@ async fn put_object_or_retry(
                 // We haven't found the way to check credentials before the request has been sent
                 // This is the weird yet working solution to throw an error if we got
                 // missing credentials error
-                if let aws_sdk_s3::error::SdkError::ConstructionFailure(_) = err {
-                    if let Some(box_error) = err.source() {
-                        if box_error.to_string()
-                            == *"No credentials in the property bag".to_string()
-                        {
-                            tracing::error!(target: INDEXER, "No credentials in the property bag");
-                            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-                        }
-                    }
+                if let aws_sdk_s3::error::SdkError::ConstructionFailure(_) = err
+                    && let Some(box_error) = err.source()
+                    && box_error.to_string() == *"No credentials in the property bag".to_string()
+                {
+                    tracing::error!(target: INDEXER, "No credentials in the property bag");
+                    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
                 }
                 metrics::RETRY_COUNT.inc();
                 tracing::warn!(
@@ -359,17 +356,17 @@ fn init_tracing() {
         "tokio_reactor=info,near=info,stats=info,telemetry=info,indexer=info,near_lake=info,aggregated=info",
     );
 
-    if let Ok(rust_log) = std::env::var("RUST_LOG") {
-        if !rust_log.is_empty() {
-            for directive in rust_log.split(',').filter_map(|s| match s.parse() {
-                Ok(directive) => Some(directive),
-                Err(err) => {
-                    eprintln!("Ignoring directive `{s}`: {err}");
-                    None
-                }
-            }) {
-                env_filter = env_filter.add_directive(directive);
+    if let Ok(rust_log) = std::env::var("RUST_LOG")
+        && !rust_log.is_empty()
+    {
+        for directive in rust_log.split(',').filter_map(|s| match s.parse() {
+            Ok(directive) => Some(directive),
+            Err(err) => {
+                eprintln!("Ignoring directive `{s}`: {err}");
+                None
             }
+        }) {
+            env_filter = env_filter.add_directive(directive);
         }
     }
 
