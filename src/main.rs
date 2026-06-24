@@ -71,6 +71,7 @@ fn main() -> anyhow::Result<()> {
             let system = actix::System::new();
             system
                 .block_on(async move {
+                    let actor = near_async::ActorSystem::new();
                     let indexer_config = args.clone().to_indexer_config(home_dir);
                     let near_config = indexer_config
                         .load_near_config()
@@ -78,6 +79,7 @@ fn main() -> anyhow::Result<()> {
                     let near_node = near_indexer::Indexer::start_near_node(
                         &indexer_config,
                         near_config.clone(),
+                        actor,
                     )
                     .await
                     .context("failed to start near node")?;
