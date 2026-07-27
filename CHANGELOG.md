@@ -1,5 +1,8 @@
 # Changelog
 
+# 1.0.0-2.13.2
+* chore: bump nearcore to 2.13.2
+
 # 1.0.0-2.13.1
 * chore: bump nearcore to 2.13.1
 
