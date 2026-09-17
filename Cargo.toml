@@ -27,7 +27,7 @@ tokio-stream = { version = "0.1" }
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 
-# Please, update the supported nearcore version in .cargo/config.toml file
+# Please update the supported nearcore version in .cargo/config.toml file
 near-client = { git = "https://github.com/near/nearcore", tag = "2.14.0-rc.1" }
 near-config-utils = { git = "https://github.com/near/nearcore", tag = "2.14.0-rc.1" }
 near-indexer = { git = "https://github.com/near/nearcore", tag = "2.14.0-rc.1" }
@@ -37,5 +37,5 @@ near-async = { git = "https://github.com/near/nearcore", tag = "2.14.0-rc.1" }
 
 [dev-dependencies]
 tar = "0.4"
-testcontainers-modules = { version = "0.11", features = ["minio"] }
-zstd = "0.13"
+testcontainers-modules = { version = "0.15", features = ["minio"] }
+zstd = "0.14"
