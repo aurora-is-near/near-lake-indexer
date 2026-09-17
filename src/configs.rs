@@ -59,6 +59,9 @@ pub(crate) struct RunArgs {
     /// Sets the different types of finality
     #[clap(long, value_enum, default_value_t = FinalityArg::Final)]
     pub finality: FinalityArg,
+    /// Skips broken blocks during indexing
+    #[clap(long, default_value_t = false)]
+    pub skip_broken_blocks: bool,
 }
 
 impl RunArgs {
@@ -76,6 +79,7 @@ impl RunArgs {
             },
             finality: self.finality.clone().into(),
             validate_genesis: self.validate_genesis,
+            skip_broken_blocks: self.skip_broken_blocks,
         }
     }
 }

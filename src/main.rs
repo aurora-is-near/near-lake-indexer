@@ -138,7 +138,6 @@ fn main() -> anyhow::Result<()> {
             config.download_config_url.as_ref().map(AsRef::as_ref),
             config.boot_nodes.as_ref().map(AsRef::as_ref),
             config.max_gas_burnt_view.map(Gas::from_gas),
-            config.state_sync_bucket.as_ref().map(AsRef::as_ref),
         )
         .context("Failed to initialize the node config files")?,
     }

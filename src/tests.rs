@@ -13,6 +13,7 @@ use testcontainers_modules::testcontainers::{ContainerAsync, ImageExt};
 use tokio::sync::{Mutex, mpsc};
 use zstd::Decoder;
 
+const MINIO_NAME: &str = "quay.io/minio/minio";
 const BLOCKS_NUMBER: usize = 100;
 const MINIO_ROOT_USER: &str = "minioadmin";
 const MINIO_ROOT_PASSWORD: &str = "minioadmin";
@@ -138,6 +139,7 @@ struct S3Container {
 impl S3Container {
     async fn start() -> Self {
         let c = MinIO::default()
+            .with_name(MINIO_NAME)
             .with_mount(Mount::tmpfs_mount("/data"))
             .with_mapped_port(9000, ContainerPort::Tcp(9000))
             .with_env_var("MINIO_ROOT_USER", MINIO_ROOT_USER)

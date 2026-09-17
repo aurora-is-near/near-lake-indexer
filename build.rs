@@ -11,6 +11,11 @@ fn main() -> anyhow::Result<()> {
     println!("cargo:rerun-if-changed=.git/HEAD");
     println!("cargo:rerun-if-changed=.git/index");
 
+    #[cfg(target_os = "macos")]
+    println!("cargo:rustc-link-lib=dylib=c++");
+    #[cfg(target_os = "linux")]
+    println!("cargo:rustc-link-lib=dylib=stdc++");
+
     println!("cargo:rustc-env=BUILD_VERSION={}", env!("NEARCORE_VERSION"));
 
     let rustc_version = get_rustc_version()?;
