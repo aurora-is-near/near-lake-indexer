@@ -67,6 +67,12 @@ jobs:
           cache: false
           toolchain: stable
           override: false
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Cargo Tests
         env:
           RUST_LOG: info

@@ -7,13 +7,14 @@ use std::ffi::OsStr;
 use std::sync::Arc;
 use tar::Archive;
 use testcontainers_modules::minio::MinIO;
-use testcontainers_modules::testcontainers::core::{ContainerPort, Mount};
+use testcontainers_modules::testcontainers::core::Mount;
 use testcontainers_modules::testcontainers::runners::AsyncRunner;
 use testcontainers_modules::testcontainers::{ContainerAsync, ImageExt};
 use tokio::sync::{Mutex, mpsc};
 use zstd::Decoder;
 
-const MINIO_NAME: &str = "quay.io/minio/minio";
+const MINIO_NAME: &str = "ghcr.io/aurora-is-near/minio";
+const MINIO_TAG: &str = "RELEASE.2025-02-28T09-55-16Z";
 const BLOCKS_NUMBER: usize = 100;
 const MINIO_ROOT_USER: &str = "minioadmin";
 const MINIO_ROOT_PASSWORD: &str = "minioadmin";
@@ -25,7 +26,7 @@ async fn test_sending_blocks_in_parallel() {
     let (sender, receiver) = mpsc::channel(BLOCKS_NUMBER);
     blocks_reader(sender).await.unwrap();
     let stats = Arc::new(Mutex::new(Stats::new()));
-    let client = create_client().await;
+    let client = create_client(&s3).await;
 
     let mut blocks = 0;
     let start = std::time::Instant::now();
@@ -84,7 +85,9 @@ async fn blocks_reader(sender: mpsc::Sender<StreamerMessage>) -> anyhow::Result<
     Ok(())
 }
 
-async fn create_client() -> aws_sdk_s3::Client {
+async fn create_client(s3: &S3Container) -> aws_sdk_s3::Client {
+    let host = s3.c.get_host().await.unwrap();
+    let port = s3.c.get_host_port_ipv4(9000).await.unwrap();
     let region_provider =
         RegionProviderChain::first_try(Some(aws_sdk_s3::config::Region::new("localhost")))
             .or_default_provider();
@@ -97,11 +100,11 @@ async fn create_client() -> aws_sdk_s3::Client {
     );
     let shared_config = aws_config::defaults(aws_config::BehaviorVersion::latest())
         .region(region_provider)
-        .endpoint_url("http://127.0.0.1:9000")
+        .endpoint_url(format!("http://{host}:{port}"))
         .credentials_provider(credentials)
         .load()
         .await;
-    let s3_conf = aws_sdk_s3::config::Builder::from(&shared_config);
+    let s3_conf = aws_sdk_s3::config::Builder::from(&shared_config).force_path_style(true);
     let client = aws_sdk_s3::Client::from_conf(s3_conf.build());
 
     client
@@ -129,7 +132,7 @@ fn is_block(entry: &tokio::fs::DirEntry) -> bool {
         .path()
         .file_name()
         .and_then(OsStr::to_str)
-        .map_or(false, |f| !f.starts_with('.'))
+        .is_some_and(|f| !f.starts_with('.'))
 }
 
 struct S3Container {
@@ -140,8 +143,8 @@ impl S3Container {
     async fn start() -> Self {
         let c = MinIO::default()
             .with_name(MINIO_NAME)
+            .with_tag(MINIO_TAG)
             .with_mount(Mount::tmpfs_mount("/data"))
-            .with_mapped_port(9000, ContainerPort::Tcp(9000))
             .with_env_var("MINIO_ROOT_USER", MINIO_ROOT_USER)
             .with_env_var("MINIO_ROOT_PASSWORD", MINIO_ROOT_PASSWORD);
         let c = c.start().await.unwrap();
